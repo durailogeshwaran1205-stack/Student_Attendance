@@ -3,6 +3,7 @@ import { NavLink } from 'react-router-dom';
 
 const HorizontalNav = ({ themeColor, setThemeColor }) => {
   const [dropdownOpen, setDropdownOpen] = useState(null);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const colorClasses = {
     blue: { bg: 'bg-blue-600', active: 'bg-blue-50 text-blue-600' },
@@ -76,21 +77,30 @@ const HorizontalNav = ({ themeColor, setThemeColor }) => {
     setDropdownOpen(dropdownOpen === index ? null : index);
   };
 
+  const toggleMobileMenu = () => {
+    setMobileMenuOpen(!mobileMenuOpen);
+    setDropdownOpen(null);
+  };
+
   const handleColorChange = (color) => {
     setThemeColor(color);
   };
 
   // Close dropdown when clicking outside
   React.useEffect(() => {
-    const handleClickOutside = () => {
-      setDropdownOpen(null);
+    const handleClickOutside = (event) => {
+      const nav = document.querySelector('nav');
+      if (nav && !nav.contains(event.target)) {
+        setDropdownOpen(null);
+        setMobileMenuOpen(false);
+      }
     };
 
-    if (dropdownOpen !== null) {
+    if (dropdownOpen !== null || mobileMenuOpen) {
       document.addEventListener('click', handleClickOutside);
       return () => document.removeEventListener('click', handleClickOutside);
     }
-  }, [dropdownOpen]);
+  }, [dropdownOpen, mobileMenuOpen]);
 
   return (
     <nav className={`${colorClasses[themeColor].bg} text-white shadow-md`}>
@@ -176,7 +186,10 @@ const HorizontalNav = ({ themeColor, setThemeColor }) => {
 
           {/* Mobile Menu Button */}
           <button
-            onClick={() => setDropdownOpen(dropdownOpen === 'mobile' ? null : 'mobile')}
+            onClick={(e) => {
+              e.stopPropagation();
+              toggleMobileMenu();
+            }}
             className="md:hidden p-2 rounded-lg text-white hover:bg-white hover:bg-opacity-20"
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -186,13 +199,16 @@ const HorizontalNav = ({ themeColor, setThemeColor }) => {
         </div>
 
         {/* Mobile Menu */}
-        {dropdownOpen === 'mobile' && (
+        {mobileMenuOpen && (
           <div className="md:hidden pb-4 animate-fadeIn">
             <ul className="space-y-2">
               {navItems.map((item, index) => (
                 <li key={item.path}>
                   <button
-                    onClick={() => toggleDropdown(`mobile-${index}`)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleDropdown(`mobile-${index}`);
+                    }}
                     className="w-full flex items-center justify-between px-4 py-3 rounded-lg text-white hover:bg-white hover:bg-opacity-20"
                   >
                     <div className="flex items-center gap-2">
@@ -211,7 +227,11 @@ const HorizontalNav = ({ themeColor, setThemeColor }) => {
                         <li key={subIndex}>
                           <NavLink
                             to={subItem.path}
-                            onClick={() => setDropdownOpen(null)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setDropdownOpen(null);
+                              setMobileMenuOpen(false);
+                            }}
                             className={({ isActive }) =>
                               `block px-4 py-2 text-sm rounded-lg transition-colors ${
                                 isActive
@@ -237,7 +257,10 @@ const HorizontalNav = ({ themeColor, setThemeColor }) => {
                 {colorOptions.map((color) => (
                   <button
                     key={color.value}
-                    onClick={() => handleColorChange(color.value)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleColorChange(color.value);
+                    }}
                     className={`w-8 h-8 rounded-full border-2 transition-all duration-200 ${color.bg} ${
                       themeColor === color.value
                         ? 'border-white scale-110'
